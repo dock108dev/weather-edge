@@ -1,0 +1,13 @@
+/.data/
+/.venv/
+/node_modules/
+/dist/
+__pycache__/
+*.py[cod]
+.DS_Store
+.pytest_cache/
+.ruff_cache/
+.env
+.env.*
+*.pem
+*.key

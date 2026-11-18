@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f4ee">
+  <title>Weather Edge</title>
+  <link rel="stylesheet" href="/app.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="masthead">
+    <a class="brand" href="/" aria-label="Weather Edge home">
+      <span class="brand-mark" aria-hidden="true"><i></i></span>
+      <span>Weather Edge</span>
+    </a>
+    <div class="mast-status"><span class="status-dot" id="collection-dot"></span><span id="collection-headline">Checking collector…</span><span class="bar"></span><span>Paper only</span></div>
+  </header>
+  <main>
+    <nav class="workspace-nav" aria-label="Workspace">
+      <a href="/?view=trade" data-workspace="trade" class="primary-destination">Trade</a>
+      <a href="/?view=weather" data-workspace="weather" class="primary-destination">Weather</a>
+      <a href="/?view=backtest" data-workspace="backtest">Backtest</a>
+      <a href="/?view=markets" data-workspace="markets">Market Archive</a>
+      <a href="/?view=research" data-workspace="research">Research</a>
+    </nav>
+    <div id="decision-workspace" hidden>
+    <div class="page-heading">
+      <div><h1 id="decision-heading">Trade</h1><p id="workspace-context" class="trade-subtitle" aria-live="polite" hidden></p></div>
+      <div class="mode-picker" role="group" aria-label="Data mode">
+        <button type="button" data-mode="replay" aria-pressed="true">Historical replay</button>
+        <button type="button" data-mode="live" aria-pressed="false"><i></i> Live capture</button>
+        <button id="preview" type="button" aria-pressed="false" disabled>Forecast ahead</button>
+      </div>
+    </div>
+    <div id="notice" class="notice" hidden></div>
+    <div class="research-strip" aria-label="Research controls">
+      <label id="archive-control">Replay date <select id="archive-day" aria-label="Replay date"></select></label>
+      <details id="collection-detail">
+        <summary id="collection-summary">Captures and source health</summary>
+        <label id="capture-control" hidden>Capture receipt <select id="capture-at" aria-label="Capture receipt"><option value="">Latest data</option></select></label>
+        <div id="collection-sources"></div>
+        <button type="button" id="collection-action" class="small-button" disabled>Checking collector…</button>
+      </details>
+    </div>
+    <p class="notice" id="trade-fixture" hidden>Synthetic fixture · Simulated weather and depth use a separate paper balance.</p>
+    <section class="card forecast-outlook" aria-labelledby="outlook-heading" id="forecast-outlook" hidden>
+      <div id="forecast-outlook-content"></div>
+    </section>
+    <div class="decision-grid">
+    <div id="weather-workspace" class="dashboard" aria-label="Weather">
+      <section class="card weather-summary" aria-labelledby="weather-summary-heading">
+        <h2 id="weather-summary-heading" tabindex="-1">Local weather</h2>
+        <label for="city-select">Find a city or station</label>
+        <select id="city-select" disabled><option>Loading stations…</option></select>
+        <div id="weather-current" aria-live="polite"></div>
+        <button type="button" id="city-markets" class="small-button" hidden>See matching market prices</button>
+      </section>
+      <section class="card globe-card" aria-labelledby="globe-heading">
+        <header class="card-head">
+          <div><div class="eyebrow" id="globe-source">NOAA GFS · 2 M TEMPERATURE</div><h2 id="globe-heading" tabindex="-1">Weather globe</h2></div>
+          <details class="layer-options"><summary>Map layers</summary><div class="layer-group">
+            <label class="layer"><input type="checkbox" id="weather-toggle" checked><span>Temperature</span></label>
+            <label class="layer"><input type="checkbox" id="cloud-toggle"><span>Clouds</span></label>
+            <label class="layer"><input type="checkbox" id="precip-toggle"><span>Precipitation</span></label>
+            <label class="layer"><input type="checkbox" id="radar-toggle"><span>Radar</span></label>
+            <label class="layer"><input type="checkbox" id="wind-toggle"><span>Wind</span></label>
+            <label class="layer"><input type="checkbox" id="marine-toggle"><span>Marine</span></label>
+            <label class="layer"><input type="checkbox" id="wave-toggle"><span>Waves</span></label>
+            <label class="layer"><input type="checkbox" id="markets-toggle" checked><span>Markets</span></label>
+          </div></details>
+        </header>
+        <div id="globe-contract" class="globe-contract" hidden></div>
+        <div id="world" class="world" tabindex="0" aria-label="Weather globe. Drag or use arrow keys to rotate. Click a point or press Enter to probe.">
+          <canvas id="thermal" aria-hidden="true"></canvas>
+          <canvas id="coast" aria-hidden="true"></canvas>
+          <div id="pins"></div>
+          <div id="probe-marker" hidden aria-hidden="true"></div>
+          <div class="globe-message" id="globe-message" hidden></div>
+          <div class="globe-controls">
+            <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
+            <button type="button" id="zoom-out" aria-label="Zoom out">−</button>
+            <button type="button" id="center" aria-label="Center globe">⌖</button>
+          </div>
+          <div class="geo-readout" id="geo-readout"></div>
+        </div>
+        <details class="probe-options"><summary>Point probe</summary><section id="probe-panel" class="probe-panel" aria-label="Weather point probe">
+          <span>Point probe</span><span>Click the globe to inspect local weather.</span>
+        </section></details>
+        <div class="map-keys">
+          <div class="thermal-key" id="thermal-key">
+            <span>Temperature °F</span><div class="heat-scale"></div>
+            <div class="heat-ticks"><span>−40</span><span>0</span><span>40</span><span>80</span><span>120</span></div>
+          </div>
+          <div class="cloud-key" id="cloud-key" hidden>
+            <span>Cloud cover</span><div class="cloud-scale"></div>
+            <div class="heat-ticks"><span>0%</span><span>100%</span></div>
+          </div>
+          <div class="cloud-key" id="wind-key" hidden><span>10 m wind · arrow length</span><div class="wind-key-line">→ 5 mph &nbsp; ⟶ 25 mph</div></div>
+          <div class="cloud-key" id="precip-key" hidden>
+            <span>3 h precipitation</span><div class="precip-scale"></div>
+            <div class="heat-ticks"><span>1 mm</span><span>25 mm</span></div>
+          </div>
+          <div class="cloud-key" id="radar-key" hidden>
+            <span>1 h radar estimate</span><div class="radar-scale"></div>
+            <div class="heat-ticks"><span>1 mm</span><span>25 mm</span></div>
+          </div>
+          <div class="cloud-key" id="marine-key" hidden><span class="marine-key-dot"></span> Marine reports</div>
+          <div class="cloud-key" id="wave-key" hidden>
+            <span>Significant wave height</span><div class="wave-scale"></div>
+            <div class="heat-ticks"><span>0 m</span><span>8 m</span></div>
+          </div>
+          <div class="market-key" id="market-key">
+            <span>Best net EV</span>
+            <div><i class="key-dot positive"></i> Positive <i class="key-dot negative"></i> ≤ $0 <i class="key-dot unknown"></i> Insufficient</div>
+          </div>
+        </div>
+        <div class="timeline">
+          <div class="timeline-top">
+            <button id="play" class="icon-button" type="button" aria-label="Play timeline">▶</button>
+            <div class="timeline-now"><strong id="cursor-clock">Loading…</strong><span id="cursor-date"></span></div>
+            <button id="latest" class="small-button" type="button">Latest capture</button>
+          </div>
+          <label class="sr-only" for="time">Timeline</label>
+          <input type="range" id="time" min="0" max="100" step="1" value="0" disabled>
+          <div class="timeline-labels"><span id="start-label"></span><span id="mid-label"></span><span id="end-label"></span></div>
+          <div class="timeline-meta">
+            <div><span id="grid-issue-label">Grid issue</span><strong id="grid-issue">—</strong></div>
+            <div><span id="grid-valid-label">Grid valid</span><strong id="grid-valid">—</strong></div>
+            <div><span id="quote-kind">Latest display sample</span><strong id="quote-at">—</strong></div>
+          </div>
+          <p id="grid-age" class="grid-age" hidden></p>
+        </div>
+      </section>
+      <section class="card station-card" aria-labelledby="station-title">
+        <div id="station-content"><div class="station-empty">Loading station data…</div></div>
+      </section>
+    </div>
+      <div id="trade-workspace" class="trade-workspace" aria-label="Trade">
+        <section class="card trade-board" aria-label="Opportunities">
+          <div class="trade-board-head">
+            <h2 id="trade-heading" tabindex="-1">Opportunities</h2>
+            <div class="mode-picker trade-tabs" role="group" aria-label="Show opportunities">
+              <button id="trade-ready" type="button" aria-pressed="true">Ready</button>
+              <button id="trade-quotes" type="button" aria-pressed="false">Prices</button>
+              <button id="trade-watch" type="button" aria-pressed="false">Watch</button>
+            </div>
+            <a class="trade-preview-jump" id="trade-preview-jump" href="#trade-ticket-heading" hidden>View order preview ↓</a>
+            <div class="trade-filters" id="trade-filters" hidden>
+              <label>Find market <input id="trade-search" type="search" placeholder="City, station or contract"></label>
+              <label>Exchange <select id="trade-venue" aria-label="Exchange"><option value="">Both venues</option><option value="polymarket-us">Polymarket US</option><option value="kalshi">Kalshi</option></select></label>
+            </div>
+          </div>
+          <div class="trade-controls" id="trade-controls">
+            <form id="trade-size-form" class="trade-budget">
+              <div class="trade-budget-field">
+                <label for="trade-budget">Order budget</label>
+                <div><span aria-hidden="true">$</span><input id="trade-budget" type="number" min="1" max="500" step="0.01" value="25" required></div>
+              </div>
+              <button class="small-button" type="submit">Reprice</button>
+            </form>
+            <div id="trade-practice" class="trade-practice">
+              <button id="practice-order" class="small-button" type="button">Try a $25 practice order</button>
+            </div>
+          </div>
+          <p id="practice-result" role="status" hidden></p>
+          <div id="trade-list"><p class="trade-empty">Reading retained books and model evidence…</p></div>
+          <div id="trade-feeds" class="trade-feeds" aria-label="Exchange price coverage"></div>
+          <div class="trade-board-footer"><button id="trade-refresh" class="small-button" type="button">Refresh prices</button></div>
+        </section>
+        <section class="card trade-ticket" aria-labelledby="trade-ticket-heading">
+          <div class="trade-ticket-head"><h2 id="trade-ticket-heading" tabindex="-1">Order preview</h2></div>
+          <div id="trade-identity"><p class="trade-empty">Select a side to review the exact contract.</p></div>
+          <div id="trade-quote"></div>
+          <p id="trade-feedback" role="status" hidden></p>
+        </section>
+      </div>
+    </div>
+      <section class="card trade-ledger" aria-labelledby="trade-orders-heading">
+        <header class="card-head">
+          <div><h2 id="trade-orders-heading">Paper orders</h2><p id="trade-balance" class="trade-subtitle"></p></div>
+          <a id="trade-strategy" class="small-button" href="#paper-heading">Saved trials</a>
+        </header>
+        <div id="trade-orders"><p class="trade-empty">Reading paper ledger…</p></div>
+      </section>
+    <details class="workspace-more" id="timeline-markets"><summary>Timeline market evidence</summary>
+    <section class="card opportunities-card" aria-labelledby="opportunities-heading">
+      <header class="card-head">
+        <div><div class="eyebrow" id="opportunity-venues">POLYMARKET US</div><h2 id="opportunities-heading">Ranked opportunities</h2></div>
+        <label class="filter-label">Show <select id="opportunity-filter" aria-label="Opportunity filter"><option value="all">All station days</option><option value="selected">Selected station day</option><option value="positive">Supported positive EV</option></select></label>
+      </header>
+      <div id="opportunity-content"></div>
+    </section>
+    </details>
+    <section class="card paper-card" aria-labelledby="paper-heading">
+      <header class="card-head">
+        <div><div class="eyebrow">POLYMARKET US</div><h2 id="paper-heading">Strategy trials</h2></div>
+        <div class="paper-settings">
+          <label>Max order <span>$<input id="order-size" type="number" min="1" max="500" step="1" value="25"></span></label>
+          <label>Reaction <span><input id="reaction" type="number" min="1" max="120" step="1" value="30">s</span></label>
+          <button type="button" id="save-run" class="small-button" disabled>Save trial</button>
+        </div>
+      </header>
+      <div id="paper-content"></div>
+      <div class="saved-runs" id="saved-runs">
+        <label class="filter-label">Saved trials <select id="paper-run" aria-label="Saved trials"><option value="">Current evidence</option></select></label>
+        <button id="follow-payouts" class="small-button" type="button" hidden>Check later payouts</button>
+        <div id="run-note" role="status"></div>
+      </div>
+    </section>
+    <section class="card model-card" id="model-card" aria-labelledby="model-heading">
+      <header class="card-head"><div><div class="eyebrow">DATE-HOLDOUT EVALUATION</div><h2 id="model-heading">Model validation</h2></div></header>
+      <div id="model-content"></div>
+    </section>
+    </div>
+    <div id="backtest-workspace" hidden>
+      <div class="page-heading">
+        <div><h1>Strategy backtest</h1><p class="trade-subtitle" id="backtest-subtitle">Replay a strategy over retained evidence with a fresh paper balance.</p></div>
+      </div>
+      <section class="card backtest-controls" aria-label="Backtest assumptions">
+        <form id="backtest-form">
+          <label id="backtest-source-field">Evidence
+            <select id="backtest-source" name="source"><option value="range">UTC date range</option><option value="capture">Retained capture</option></select>
+          </label>
+          <label class="backtest-range">Start date (UTC)<input name="start" type="date" value="2026-11-06" required></label>
+          <label class="backtest-range">End date (UTC)<input name="end" type="date" value="2026-11-06" required></label>
+          <label id="backtest-capture-field" hidden>Capture through (UTC)<select name="capture_at" disabled></select></label>
+          <label>Strategy
+            <select name="strategy">
+              <option value="two-sided">YES or NO with positive net EV</option>
+              <option value="two-sided-buffered">YES or NO with a probability buffer</option>
+              <option value="no-trade">Hold cash</option>
+            </select>
+          </label>
+          <label>Max order ($)<input name="size" type="number" min="1" max="500" step="0.01" value="25" required></label>
+          <label>Reaction (seconds)<input name="reaction" type="number" min="1" max="120" step="1" value="30" required></label>
+          <button class="action-button" type="submit">Run and save backtest</button>
+        </form>
+        <p id="backtest-assumptions"></p>
+        <div class="backtest-references">
+          <a href="/?view=weather&day=2026-11-06&station=KNYC&bucket=tc-temp-nychigh-2026-11-06-gte70lt71f">Replay Nov 6 Central Park 70–71°F</a>
+          <a id="backtest-fixture-link" href="/?view=backtest&fixture=1">Try synthetic fill and skip</a>
+        </div>
+      </section>
+      <section class="card backtest-saved" aria-label="Reopen a saved backtest">
+        <label>Saved backtests <select id="backtest-saved"><option value="">Choose a saved backtest</option></select></label>
+        <form id="backtest-open">
+          <label>Saved ID <input name="run" pattern="[a-f0-9]{24}" maxlength="24" placeholder="Paste an ID" required></label>
+          <button class="small-button" type="submit">Open</button>
+        </form>
+      </section>
+      <p id="backtest-status" role="status"></p>
+      <section class="card backtest-result" id="backtest-result" aria-label="Backtest result" hidden></section>
+    </div>
+    <div id="markets-workspace" hidden>
+      <div class="page-heading">
+        <h1>Market archive</h1>
+        <div class="artifact-links" id="market-exports">
+          <a href="/api/markets/export.csv" download>Export CSV</a>
+          <a href="/api/markets/export.json" download>Export JSON</a>
+        </div>
+      </div>
+      <section class="card market-search" aria-label="Filter market archive">
+        <form id="market-filters">
+          <label class="market-text-search">Search <input name="text" type="search" placeholder="Title, ticker, or slug"></label>
+          <label>Venue <select name="venue"><option value="">All venues</option><option value="kalshi">Kalshi</option><option value="polymarket-us">Polymarket US</option></select></label>
+          <label>Family <select name="family"><option value="">All families</option></select></label>
+          <label>Station or region <input name="place" type="search" placeholder="KNYC or New York"></label>
+          <label>Date <input name="day" type="date"></label>
+          <label>Status <select name="status"><option value="">All statuses</option><option value="open">Open</option><option value="upcoming">Upcoming</option><option value="settled">Settled</option><option value="closed">Closed</option></select></label>
+          <button class="action-button" type="submit">Search</button>
+        </form>
+        <p id="market-coverage" class="evidence-summary" aria-live="polite"></p>
+        <details id="market-coverage-details" hidden>
+          <summary>Coverage and open backfills</summary>
+          <div id="market-coverage-detail-content"></div>
+        </details>
+      </section>
+      <div class="evidence-workspace">
+        <section class="card evidence-list" aria-label="Market results">
+          <div id="market-results" aria-live="polite"></div>
+          <div class="evidence-paging" id="market-paging" hidden>
+            <button type="button" class="small-button" id="market-prev">Previous</button>
+            <span id="market-range"></span>
+            <button type="button" class="small-button" id="market-next">Next</button>
+          </div>
+        </section>
+        <section class="card evidence-inspector" id="market-inspector" aria-label="Contract detail" aria-live="polite">
+          <p class="evidence-placeholder">Select a contract to see its rules, prices, books, or payout.</p>
+        </section>
+      </div>
+    </div>
+    <div id="research-workspace" hidden>
+      <div class="page-heading">
+        <h1>Research</h1>
+        <div class="research-filters">
+          <label class="filter-label">Find <input type="search" id="research-search" placeholder="Study, target, or venue"></label>
+          <label class="filter-label">Show <select id="research-kind"><option value="">All studies</option><option value="models">Forecast models</option><option value="strategies">Paper strategies</option></select></label>
+          <span id="research-matches" role="status"></span>
+        </div>
+      </div>
+      <details id="research-issues" class="notice" data-kind="error" hidden>
+        <summary></summary><ul></ul>
+      </details>
+      <div class="evidence-workspace">
+        <section class="card evidence-list" id="research-results" aria-label="Studies"></section>
+        <section class="card evidence-inspector" id="research-inspector" aria-label="Study detail" aria-live="polite" hidden></section>
+      </div>
+    </div>
+    <footer><span>Weather Edge</span><span>Times shown at the selected station · Paper only</span></footer>
+  </main>
+</body>
+</html>
